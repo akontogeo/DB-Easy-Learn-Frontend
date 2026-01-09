@@ -1,0 +1,1261 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "EasyLearn API",
+    "description": "REST API for the EasyLearn educational platform",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Vris,Kontogeorgou,Miliousi,Segkani",
+      "email": "akontogeo@ece.auth.gr"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://EasyLearn.gr",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/users/{userId}": {
+      "get": {
+        "summary": "Get user profile",
+        "description": "Returns the profile information of a specific user\n|\n FR10-The user must be able to visit their profile",
+        "operationId": "getUserProfile",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User profile retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update user profile",
+        "description": "Updates the profile of a specific user. \nCan be used to update isPremium status.\nFR17 - The user must be able to become a premium user.\n",
+        "operationId": "updateUser",
+        "tags": [
+          "User"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user to update",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "isPremium"
+                ],
+                "properties": {
+                  "isPremium": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/courses": {
+      "post": {
+        "summary": "Enroll user in a course",
+        "description": "FR6 - The user must be able to enroll in a course.\nFR19- The premium user must be able to have access to exclusive courses (Unhappy path->Not accessible error 400)\n",
+        "operationId": "enrollInCourse",
+        "tags": [
+          "Enroll"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "ID of the user"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "courseId"
+                ],
+                "properties": {
+                  "courseId": {
+                    "type": "integer",
+                    "format": "int32",
+                    "description": "ID of the course to enroll in"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enrollment successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Enrollment not allowed (e.g. course is premium and user is not premium)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/courses/{courseId}": {
+      "delete": {
+        "summary": "Withdraw user from a course",
+        "description": "FR30 - The user must be able to withdraw from a course\n",
+        "operationId": "withdrawUserFromCourse",
+        "tags": [
+          "Withdraw"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "description": "ID of the user",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "description": "ID of the course that is going to be withdrawn.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Confirm User's successful withdrawal"
+          },
+          "404": {
+            "description": "User or course not found, or user not enrolled in the course",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/courses/{courseId}/certificate": {
+      "get": {
+        "summary": "Get certificate of course completion",
+        "description": "FR11-The user must be able to receive certifications of completion in each course\n",
+        "operationId": "getUserCertificate",
+        "tags": [
+          "Certification"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully generated the certification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Certification"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User or course not found or user not eligible for certification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses": {
+      "get": {
+        "summary": "Search courses by keyword or-and filters",
+        "description": "FR5-The user must be able to search for a course\nFR33-The user must be able to filter the search\n",
+        "operationId": "searchCourses",
+        "tags": [
+          "Course"
+        ],
+        "parameters": [
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "Keyword to search in course title or category",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by course category",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Programming",
+                "Digital Marketing",
+                "Project Managament",
+                "Economics and Finance",
+                "Data Science and Machine Learning"
+              ]
+            }
+          },
+          {
+            "name": "difficulty",
+            "in": "query",
+            "description": "Filter by course difficulty level",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "beginner",
+                "intermediate",
+                "advanced"
+              ]
+            }
+          },
+          {
+            "name": "Premium",
+            "in": "query",
+            "description": "Filter by premium status",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful filtered search – results found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "Unsuccessful filtered search – no results found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a new course",
+        "description": "FR3-The admin must be able to add a course to the platform\n",
+        "operationId": "addCourse",
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCourse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input - missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{courseId}": {
+      "get": {
+        "summary": "Get course details by ID",
+        "description": "Returns full information about a specific course\n| \n FR32-The user must be able to see course's details",
+        "operationId": "coursedetails",
+        "tags": [
+          "Course"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course to retrieve",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Course details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Course not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Edit a course",
+        "description": "FR28 - The admin must be able to edit a course\n",
+        "operationId": "editCourse",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course to update",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Course"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Course updated successfully"
+          },
+          "400": {
+            "description": "Invalid input- missing required fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Remove a course",
+        "description": "FR27 - The admin must be able to remove a course from the platform\n",
+        "operationId": "removeCourse",
+        "tags": [
+          "Admin"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course to delete",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Course deleted successfully"
+          },
+          "404": {
+            "description": "Course not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/leaderboard": {
+      "get": {
+        "summary": "Get leaderboard ranking",
+        "description": "FR9- The user must be able to appear on a leaderboard based on points\n",
+        "operationId": "getLeaderboard",
+        "tags": [
+          "Leaderboard"
+        ],
+        "responses": {
+          "200": {
+            "description": "Leaderboard retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LeaderboardEntry"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{courseId}/ratings": {
+      "get": {
+        "summary": "Get course ratings",
+        "description": "Returns a list of all ratings for the specified course",
+        "operationId": "getCourseRatings",
+        "tags": [
+          "Rating"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ratings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rating"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Submit a course rating",
+        "description": "User submits a new rating for the specified course\n|\n  FR-15 The user must be able to rate a course",
+        "operationId": "submitCourseRating",
+        "tags": [
+          "Rating"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RatingInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Rating submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rating"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Νο rating input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{courseId}/forumPosts": {
+      "get": {
+        "summary": "Get forum posts for a course",
+        "description": "Returns a list of forum posts for the specified course",
+        "operationId": "getForumPosts",
+        "tags": [
+          "Forum"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of forum posts retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ForumPost"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new forum post",
+        "description": "Creates a new forum post under the specified course\n|\n  FR16-The user must be able to participate in forums in each course",
+        "operationId": "createForumPost",
+        "tags": [
+          "Forum"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the course",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForumPostInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Forum post created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForumPost"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{courseId}/quizzes/{quizId}": {
+      "get": {
+        "summary": "Get quiz details",
+        "description": "Retrieves the quiz questions and metadata for a specific quiz\n|\n  FR14 – The user must be able to participate in quizzes in each course",
+        "operationId": "getQuiz",
+        "tags": [
+          "Quiz"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "ID of the course"
+          },
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "ID of the quiz"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Quiz retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizForUser"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid course or quiz ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/courses/{courseId}/quizzes/{quizId}/submit": {
+      "post": {
+        "summary": "Submit user's answers for a quiz",
+        "description": "Submits answers for grading to the specified quiz\n|\n  FR7 – The user must be able to participate in quizzes in each course\n  FR8 – The user must be able to earn points from quizzes",
+        "operationId": "submitQuizAnswers",
+        "tags": [
+          "Quiz"
+        ],
+        "parameters": [
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the course"
+          },
+          {
+            "name": "quizId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the quiz"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuizSubmission"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Quiz submitted and graded successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuizResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Empty fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/users/{userId}/recommendations": {
+      "get": {
+        "summary": "Get recommended courses for a user",
+        "description": "Returns a list of courses recommended to the specified user base on their enrolled courses\n|\n  FR18-The user must be able to receive recommendations for courses based on their learning history",
+        "operationId": "getUserRecommendations",
+        "tags": [
+          "Recommendations"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the user",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of recommended courses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid user ID or recommendation criteria"
+          }
+        }
+      }
+    },
+    "/users/{userId}/courses/{courseId}/progress": {
+      "get": {
+        "summary": "Get user's progress in a course",
+        "description": "FR31-The user must be able to see their progress\n....It's calculated dynamically for each user in each course\n",
+        "operationId": "getProgress",
+        "tags": [
+          "Progress"
+        ],
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Progress retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Progress"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "isPremium": {
+            "type": "boolean"
+          },
+          "enrolledCourses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Course"
+            }
+          }
+        }
+      },
+      "Course": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/NewCourse"
+          }
+        ],
+        "required": [
+          "courseId"
+        ],
+        "properties": {
+          "courseId": {
+            "type": "integer"
+          }
+        }
+      },
+      "NewCourse": {
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "category",
+          "difficulty",
+          "premium",
+          "courseImage",
+          "totalPoints"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "difficulty": {
+            "type": "string",
+            "enum": [
+              "Beginner",
+              "Intermediate",
+              "Advanced"
+            ]
+          },
+          "premium": {
+            "type": "boolean"
+          },
+          "courseImage": {
+            "type": "string",
+            "format": "uri"
+          },
+          "materialList": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quizList": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "totalPoints": {
+            "type": "integer"
+          }
+        }
+      },
+      "LeaderboardEntry": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "example": "john_doe"
+          },
+          "totalPoints": {
+            "type": "integer",
+            "example": 470
+          },
+          "rank": {
+            "type": "integer",
+            "example": 1
+          }
+        }
+      },
+      "RatingInput": {
+        "type": "object",
+        "required": [
+          "userId",
+          "stars"
+        ],
+        "properties": {
+          "userId": {
+            "type": "integer"
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          }
+        }
+      },
+      "Rating": {
+        "type": "object",
+        "required": [
+          "ratingId",
+          "userId",
+          "courseId",
+          "stars"
+        ],
+        "properties": {
+          "ratingId": {
+            "type": "integer"
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "courseId": {
+            "type": "integer"
+          },
+          "stars": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5
+          }
+        }
+      },
+      "ForumPost": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ForumPostInput"
+          }
+        ],
+        "required": [
+          "postId",
+          "courseId",
+          "postDate"
+        ],
+        "properties": {
+          "postId": {
+            "type": "integer"
+          },
+          "courseId": {
+            "type": "integer"
+          },
+          "postDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ForumPostInput": {
+        "type": "object",
+        "required": [
+          "userId",
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "integer"
+          }
+        }
+      },
+      "QuizForUser": {
+        "type": "object",
+        "properties": {
+          "quizId": {
+            "type": "integer"
+          },
+          "courseId": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuizQuestionForUser"
+            }
+          }
+        },
+        "required": [
+          "quizId",
+          "title",
+          "questions"
+        ]
+      },
+      "QuizQuestionForUser": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer"
+          },
+          "questionText": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "questionId",
+          "questionText",
+          "options"
+        ]
+      },
+      "QuizSubmission": {
+        "type": "object",
+        "required": [
+          "userId",
+          "answers"
+        ],
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The ID of the user submitting the quiz"
+          },
+          "answers": {
+            "type": "array",
+            "description": "List of answers (index-based)",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "QuizResult": {
+        "type": "object",
+        "required": [
+          "score"
+        ],
+        "properties": {
+          "score": {
+            "type": "integer",
+            "description": "Number of correct answers"
+          }
+        }
+      },
+      "Progress": {
+        "type": "object",
+        "properties": {
+          "progressId": {
+            "type": "integer"
+          },
+          "userId": {
+            "type": "integer",
+            "example": 101
+          },
+          "courseId": {
+            "type": "integer",
+            "example": 7
+          },
+          "progressPercentage": {
+            "type": "number",
+            "format": "float",
+            "example": 67.5
+          }
+        }
+      },
+      "Certification": {
+        "type": "object",
+        "required": [
+          "certificationId",
+          "userId",
+          "courseId"
+        ],
+        "properties": {
+          "certificationId": {
+            "type": "integer"
+          },
+          "userId": {
+            "type": "integer"
+          },
+          "courseId": {
+            "type": "integer"
+          }
+        }
+      }
+    }
+  }
+}

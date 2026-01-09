@@ -1,0 +1,23 @@
+:root{
+  --mint: #c9f1e0;
+  --accent: #2ea67a;
+  --muted: #f5f5f5;
+  --text: #222;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, Arial, sans-serif;
+  color:var(--text);
+  background:var(--muted);
+}
+.container{max-width:1600px;margin:0 auto;padding:24px}
+.grid{display:grid;grid-template-columns:1fr 320px;gap:24px}
+.card{background:white;border-radius:8px;padding:16px;box-shadow:0 4px 8px rgba(0,0,0,0.06)}
+.btn{background:var(--accent);color:white;padding:8px 12px;border-radius:6px;border:none;cursor:pointer}
+.header{background:var(--mint);padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+.search{width:480px;padding:10px;border-radius:24px;border:none;box-shadow:0 6px 18px rgba(0,0,0,0.08)}
+@media(max-width:900px){
+  .grid{grid-template-columns:1fr}
+  .search{width:100%}
+}

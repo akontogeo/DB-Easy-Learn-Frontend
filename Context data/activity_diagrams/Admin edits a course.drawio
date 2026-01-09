@@ -1,0 +1,123 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36" version="26.1.3">
+  <diagram name="Σελίδα-1" id="LYDvDXb-dW5KNJAco7FL">
+    <mxGraphModel dx="1368" dy="754" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="F7pjwC4KurJnhARAa-ad-27" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="395" y="50" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-28" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0.125;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-27" target="F7pjwC4KurJnhARAa-ad-30" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="405" y="140" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-29" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="745" y="630" width="30" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-30" value="" style="rhombus;whiteSpace=wrap;html=1;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="370" y="135" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-31" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-30" edge="1">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="550" y="155" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-32" value="yes" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=top;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-30" target="F7pjwC4KurJnhARAa-ad-36" edge="1">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="410" y="235" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-33" value="Logged in as Admin?" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="420" y="90" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-34" value="Log in" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="550" y="135" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-35" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;movable=1;resizable=1;rotatable=1;deletable=1;editable=1;locked=0;connectable=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-34" target="F7pjwC4KurJnhARAa-ad-36" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="260" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="610" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-36" value="Click &quot;Edit&quot;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="350" y="240" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-37" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-36" target="F7pjwC4KurJnhARAa-ad-38" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="420" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-38" value="Change Course Details" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="350" y="320" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-39" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-38" target="F7pjwC4KurJnhARAa-ad-40" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="410" y="420" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-40" value="Click &quot;OK&quot;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="350" y="390" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-41" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-40" target="F7pjwC4KurJnhARAa-ad-42" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="410" y="490" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-42" value="" style="rhombus;whiteSpace=wrap;html=1;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="370" y="510" width="80" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-43" value="no" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-42" target="p0_7nGDALt4YTmsn4C6x-1" edge="1">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="510" y="530" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-44" value="yes" style="edgeStyle=orthogonalEdgeStyle;html=1;align=left;verticalAlign=top;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-42" target="p0_7nGDALt4YTmsn4C6x-3" edge="1">
+          <mxGeometry x="-1" relative="1" as="geometry">
+            <mxPoint x="410" y="660" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-45" value="Are there empty fields?" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="405" y="450" width="85" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-46" value="Redirection to admin profile" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="700" y="510" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-47" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-46" target="F7pjwC4KurJnhARAa-ad-29" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="700" y="610" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-50" value="The empty fields turn red" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" parent="1" vertex="1">
+          <mxGeometry x="350" y="700" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="F7pjwC4KurJnhARAa-ad-51" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="F7pjwC4KurJnhARAa-ad-50" target="F7pjwC4KurJnhARAa-ad-38" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="290" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9lw3bVOGYwPcFvr6Iw7X-1" value="Admin remains on the same page" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="230" y="550" width="110" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_7nGDALt4YTmsn4C6x-1" value="Inform Admin about success" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" vertex="1" parent="1">
+          <mxGeometry x="530" y="510" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_7nGDALt4YTmsn4C6x-2" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" source="p0_7nGDALt4YTmsn4C6x-1" parent="1" target="F7pjwC4KurJnhARAa-ad-46">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="604" y="510" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="p0_7nGDALt4YTmsn4C6x-3" value="Inform Adim about failure" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fontColor=#000000;fillColor=#ffffc0;strokeColor=#ff0000;" vertex="1" parent="1">
+          <mxGeometry x="350" y="610" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="p0_7nGDALt4YTmsn4C6x-4" value="" style="edgeStyle=orthogonalEdgeStyle;html=1;verticalAlign=bottom;endArrow=open;endSize=8;strokeColor=#ff0000;rounded=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" source="p0_7nGDALt4YTmsn4C6x-3" parent="1" target="F7pjwC4KurJnhARAa-ad-50">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="160" y="480" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
