@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { searchCourses, createCourse, updateCourse, deleteCourse } from '../api/courses';
-import { getCategories } from '../api/categories';
+import { getCategories, createCategory } from '../api/categories';
 import { useAuth } from '../context/AuthContext';
 
 export default function TeacherCourses() {
@@ -14,14 +14,22 @@ export default function TeacherCourses() {
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
 
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category_id: ''
   });
 
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    description: ''
+  });
+
   const [error, setError] = useState('');
   const [emptyFields, setEmptyFields] = useState([]);
+  const [categoryError, setCategoryError] = useState('');
 
   useEffect(() => {
     loadData();
@@ -60,6 +68,43 @@ export default function TeacherCourses() {
     setFormData({ title: '', description: '', category_id: '' });
     resetModalState();
     setShowModal(true);
+  };
+
+  const handleCreateCategory = () => {
+    if (!user || user.role !== 'teacher') {
+      alert('You must be logged in as a teacher to create a category.');
+      return;
+    }
+
+    setCategoryFormData({ name: '', description: '' });
+    setCategoryError('');
+    setShowCategoryModal(true);
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    setCategoryError('');
+
+    const payload = {
+      category_name: (categoryFormData.name ?? '').trim(),
+      teacher_id: user?.userId,
+      category_description: (categoryFormData.description ?? '').trim()
+    };
+
+    if (!payload.category_name || !payload.category_description) {
+      setCategoryError('Please fill in all fields');
+      return;
+    }
+
+    const res = await createCategory(payload);
+
+    if (!res.ok) {
+      setCategoryError(res.error?.message || 'Failed to create category');
+      return;
+    }
+
+    setShowCategoryModal(false);
+    await loadData(); // Reload categories
   };
 
   const handleEdit = (course) => {
@@ -138,21 +183,38 @@ export default function TeacherCourses() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0 }}>My Courses</h1>
-        <button
-          onClick={handleCreate}
-          style={{
-            padding: '12px 24px',
-            background: '#2ea67a',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 16,
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          + Create Course
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={handleCreateCategory}
+            style={{
+              padding: '12px 24px',
+              background: '#4a90e2',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            + Create Category
+          </button>
+          <button
+            onClick={handleCreate}
+            style={{
+              padding: '12px 24px',
+              background: '#2ea67a',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            + Create Course
+          </button>
+        </div>
       </div>
 
       {/* Courses Grid */}
@@ -371,6 +433,118 @@ export default function TeacherCourses() {
                   }}
                 >
                   {editingCourse ? 'Save Changes' : 'Create Course'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Category Creation Modal */}
+      {showCategoryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              padding: 32,
+              maxWidth: 500,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>Create New Category</h2>
+
+            {categoryError && (
+              <div style={{ padding: 12, background: '#fee', color: '#c00', borderRadius: 6, marginBottom: 16 }}>
+                {categoryError}
+              </div>
+            )}
+
+            <form onSubmit={handleCategorySubmit}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Name *</label>
+                <input
+                  type="text"
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Description *</label>
+                <textarea
+                  value={categoryFormData.description}
+                  onChange={(e) => setCategoryFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setCategoryError('');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#4a90e2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Create Category
                 </button>
               </div>
             </form>

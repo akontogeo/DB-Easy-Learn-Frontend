@@ -402,7 +402,7 @@ export default function CourseProgress(){
                   )}
                 </div>
                 <button 
-                  onClick={() => alert(`Navigate to lesson: ${lesson.lesson_title}\n(To be implemented)`)}
+                  onClick={() => navigate(`/users/${userId}/courses/${courseId}/lessons/${encodeURIComponent(lesson.lesson_title)}`)}
                   style={{
                     background: '#2ea67a',
                     color: 'white',

@@ -53,34 +53,43 @@ export const getCategoryCourses = (categoryId) => {
 };
 
 // POST /categories - Create new category (Admin/Teacher only)
-export const createCategory = (payload, authCredentials) => {
-  const config = {};
-  if (authCredentials) {
-    const auth = btoa(`${authCredentials.username}:${authCredentials.password}`);
-    config.headers = { Authorization: `Basic ${auth}` };
+export const createCategory = async (payload) => {
+  try {
+    const r = await client.post('/categories', payload);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return {
+      ok: false,
+      status: err?.response?.status,
+      error: err?.response?.data
+    };
   }
-  
-  return client.post('/categories', payload, config).then(r => unwrap(r));
 };
 
 // PUT /categories/:categoryId - Update category (Admin/Teacher only)
-export const updateCategory = (categoryId, payload, authCredentials) => {
-  const config = {};
-  if (authCredentials) {
-    const auth = btoa(`${authCredentials.username}:${authCredentials.password}`);
-    config.headers = { Authorization: `Basic ${auth}` };
+export const updateCategory = async (categoryId, payload) => {
+  try {
+    const r = await client.put(`/categories/${categoryId}`, payload);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return {
+      ok: false,
+      status: err?.response?.status,
+      error: err?.response?.data
+    };
   }
-  
-  return client.put(`/categories/${categoryId}`, payload, config).then(r => unwrap(r));
 };
 
 // DELETE /categories/:categoryId - Delete category (Admin only)
-export const deleteCategory = (categoryId, authCredentials) => {
-  const config = {};
-  if (authCredentials) {
-    const auth = btoa(`${authCredentials.username}:${authCredentials.password}`);
-    config.headers = { Authorization: `Basic ${auth}` };
+export const deleteCategory = async (categoryId) => {
+  try {
+    await client.delete(`/categories/${categoryId}`);
+    return { ok: true };
+  } catch (err) {
+    return {
+      ok: false,
+      status: err?.response?.status,
+      error: err?.response?.data
+    };
   }
-  
-  return client.delete(`/categories/${categoryId}`, config);
 };

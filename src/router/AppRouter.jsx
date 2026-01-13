@@ -9,6 +9,7 @@ import Profile from '../pages/Profile';
 import CourseProgress from '../pages/CourseProgress';
 import CourseReviews from '../pages/CourseReviews';
 import QuizTaking from '../pages/QuizTaking';
+import LessonViewer from '../pages/LessonViewer';
 import Login from '../pages/Login';
 import TeacherCourses from '../pages/TeacherCourses';
 import TeacherCourseDetails from '../pages/TeacherCourseDetails';
@@ -68,6 +69,7 @@ export default function AppRouter(){
           <Route path="/courses/:id" element={<CourseDetails/>} />
           <Route path="/courses/:courseId/reviews" element={<CourseReviews/>} />
           <Route path="/users/:userId/courses/:courseId" element={<CourseProgress/>} />
+          <Route path="/users/:userId/courses/:courseId/lessons/:lessonTitle" element={<LessonViewer/>} />
           <Route path="/users/:userId/courses/:courseId/quizzes/:quizId" element={<QuizTaking/>} />
           <Route path="/users/:userId" element={<Profile/>} />
           <Route path="*" element={<Navigate to="/" replace />} />
