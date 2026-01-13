@@ -1,108 +1,173 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { searchCourses, createCourse, updateCourse, deleteCourse } from '../api/courses';
-import { getCategories } from '../api/categories';
+import { getCategories, createCategory } from '../api/categories';
 import { useAuth } from '../context/AuthContext';
 
 export default function TeacherCourses() {
   const { user } = useAuth();
+
   const [courses, setCourses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+
   const [showModal, setShowModal] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     category_id: ''
   });
+
+  const [categoryFormData, setCategoryFormData] = useState({
+    name: '',
+    description: ''
+  });
+
   const [error, setError] = useState('');
+  const [emptyFields, setEmptyFields] = useState([]);
+  const [categoryError, setCategoryError] = useState('');
 
   useEffect(() => {
     loadData();
+    // eslint-disable-next-line
   }, []);
 
   const loadData = async () => {
     setLoading(true);
+
     const [coursesData, categoriesData] = await Promise.all([
       searchCourses(),
       getCategories()
     ]);
-    // Filter to show only teacher's own courses
-    const teacherCourses = coursesData.filter(course => course.teacher_id === user.userId);
+
+    const teacherCourses = (coursesData || []).filter(
+      (course) => String(course.teacher_id) === String(user?.userId)
+    );
+
     setCourses(teacherCourses);
-    setCategories(categoriesData);
+    setCategories(categoriesData || []);
     setLoading(false);
   };
 
-  const handleCreate = () => {
-    setEditingCourse(null);
-    setFormData({
-      title: '',
-      description: '',
-      category_id: ''
-    });
+  const resetModalState = () => {
     setError('');
+    setEmptyFields([]);
+  };
+
+  const handleCreate = () => {
+    if (!user || user.role !== 'teacher') {
+      alert('You must be logged in as a teacher to create a course.');
+      return;
+    }
+
+    setEditingCourse(null);
+    setFormData({ title: '', description: '', category_id: '' });
+    resetModalState();
     setShowModal(true);
+  };
+
+  const handleCreateCategory = () => {
+    if (!user || user.role !== 'teacher') {
+      alert('You must be logged in as a teacher to create a category.');
+      return;
+    }
+
+    setCategoryFormData({ name: '', description: '' });
+    setCategoryError('');
+    setShowCategoryModal(true);
+  };
+
+  const handleCategorySubmit = async (e) => {
+    e.preventDefault();
+    setCategoryError('');
+
+    const payload = {
+      category_name: (categoryFormData.name ?? '').trim(),
+      teacher_id: user?.userId,
+      category_description: (categoryFormData.description ?? '').trim()
+    };
+
+    if (!payload.category_name || !payload.category_description) {
+      setCategoryError('Please fill in all fields');
+      return;
+    }
+
+    const res = await createCategory(payload);
+
+    if (!res.ok) {
+      setCategoryError(res.error?.message || 'Failed to create category');
+      return;
+    }
+
+    setShowCategoryModal(false);
+    await loadData(); // Reload categories
   };
 
   const handleEdit = (course) => {
     setEditingCourse(course);
     setFormData({
-      title: course.course_title,
-      description: course.course_description,
+      title: course.course_title || '',
+      description: course.course_description || '',
       category_id: course.category_id?.toString() || ''
     });
-    setError('');
+    resetModalState();
     setShowModal(true);
   };
 
   const handleDelete = async (courseId) => {
-    if (!window.confirm('Are you sure you want to delete this course?')) {
+    if (!window.confirm('Are you sure you want to delete this course?')) return;
+
+    const res = await deleteCourse(courseId);
+
+    if (!res?.ok) {
+      alert('Failed to delete course: ' + (res?.error?.message || 'Request failed'));
       return;
     }
 
-    try {
-      await deleteCourse(courseId, { teacher_email: user.email });
-      await loadData();
-    } catch (err) {
-      alert('Failed to delete course: ' + (err.response?.data?.message || err.message));
-    }
+    await loadData();
+  };
+
+  const updateField = (field, value) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    setEmptyFields((prev) => prev.filter((f) => f !== field));
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setEmptyFields([]);
 
-    if (!formData.title || !formData.description || !formData.category_id) {
-      setError('Please fill in all required fields');
+    const payload = {
+      course_title: (formData.title ?? '').trim(),
+      course_description: (formData.description ?? '').trim(),
+      category_id: Number(formData.category_id)
+    };
+
+    console.log('Course payload:', payload);
+
+    const res = editingCourse
+      ? await updateCourse(editingCourse.course_id, payload)
+      : await createCourse(payload);
+
+    // unhappy scenario (validation middleware)
+    if (!res.ok && res.status === 400 && res.error?.data?.emptyFields) {
+      setError(res.error?.message || 'There are empty fields');
+      setEmptyFields(res.error.data.emptyFields);
       return;
     }
 
-    try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        category_id: parseInt(formData.category_id),
-        teacher_email: user.email
-      };
-
-      // Add teacher_id for create (required by backend)
-      if (!editingCourse) {
-        payload.teacher_id = user.userId;
-      }
-
-      if (editingCourse) {
-        await updateCourse(editingCourse.course_id, payload);
-      } else {
-        await createCourse(payload);
-      }
-
-      setShowModal(false);
-      await loadData();
-    } catch (err) {
-      setError(err.response?.data?.message || err.message || 'Failed to save course');
+    if (!res.ok) {
+      setError(res.error?.message || 'Failed to save course');
+      return;
     }
+
+    setShowModal(false);
+    await loadData();
   };
 
   if (loading) {
@@ -118,21 +183,38 @@ export default function TeacherCourses() {
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 30 }}>
         <h1 style={{ margin: 0 }}>My Courses</h1>
-        <button
-          onClick={handleCreate}
-          style={{
-            padding: '12px 24px',
-            background: '#2ea67a',
-            color: 'white',
-            border: 'none',
-            borderRadius: 8,
-            fontSize: 16,
-            fontWeight: 'bold',
-            cursor: 'pointer'
-          }}
-        >
-          + Create Course
-        </button>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <button
+            onClick={handleCreateCategory}
+            style={{
+              padding: '12px 24px',
+              background: '#4a90e2',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            + Create Category
+          </button>
+          <button
+            onClick={handleCreate}
+            style={{
+              padding: '12px 24px',
+              background: '#2ea67a',
+              color: 'white',
+              border: 'none',
+              borderRadius: 8,
+              fontSize: 16,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            + Create Course
+          </button>
+        </div>
       </div>
 
       {/* Courses Grid */}
@@ -142,22 +224,27 @@ export default function TeacherCourses() {
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: 24 }}>
-          {courses.map(course => (
-            <div key={course.course_id} style={{
-              background: 'white',
-              border: '1px solid #ddd',
-              borderRadius: 12,
-              padding: 20,
-              display: 'flex',
-              flexDirection: 'column'
-            }}>
+          {courses.map((course) => (
+            <div
+              key={course.course_id}
+              style={{
+                background: 'white',
+                border: '1px solid #ddd',
+                borderRadius: 12,
+                padding: 20,
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+            >
               <h3 style={{ margin: '0 0 12px 0', fontSize: 20 }}>{course.course_title}</h3>
               <p style={{ color: '#666', fontSize: 14, marginBottom: 16, flex: 1 }}>
                 {course.course_description}
               </p>
               <div style={{ fontSize: 12, color: '#999', marginBottom: 16 }}>
-                Category: {categories.find(c => c.category_id === course.category_id)?.category_name || 'N/A'}
+                Category:{' '}
+                {categories.find((c) => String(c.category_id) === String(course.category_id))?.category_name || 'N/A'}
               </div>
+
               <div style={{ display: 'flex', gap: 8 }}>
                 <Link
                   to={`/teacher/courses/${course.course_id}`}
@@ -177,6 +264,7 @@ export default function TeacherCourses() {
                 >
                   Manage
                 </Link>
+
                 <button
                   onClick={() => handleEdit(course)}
                   style={{
@@ -193,6 +281,7 @@ export default function TeacherCourses() {
                 >
                   Edit
                 </button>
+
                 <button
                   onClick={() => handleDelete(course.course_id)}
                   style={{
@@ -214,31 +303,35 @@ export default function TeacherCourses() {
         </div>
       )}
 
-      {/* Create/Edit Modal */}
+      {/* Modal */}
       {showModal && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <div style={{
-            background: 'white',
-            borderRadius: 12,
-            padding: 32,
-            maxWidth: 500,
-            width: '90%',
-            maxHeight: '90vh',
-            overflow: 'auto'
-          }}>
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              padding: 32,
+              maxWidth: 500,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
             <h2 style={{ marginTop: 0 }}>{editingCourse ? 'Edit Course' : 'Create New Course'}</h2>
-            
+
             {error && (
               <div style={{ padding: 12, background: '#fee', color: '#c00', borderRadius: 6, marginBottom: 16 }}>
                 {error}
@@ -247,62 +340,56 @@ export default function TeacherCourses() {
 
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>
-                  Title *
-                </label>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Title *</label>
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => updateField('title', e.target.value)}
                   style={{
                     width: '100%',
                     padding: 10,
-                    border: '1px solid #ddd',
+                    border: emptyFields.includes('course_title') || emptyFields.includes('title') ? '2px solid red' : '1px solid #ddd',
+                    background: emptyFields.includes('course_title') || emptyFields.includes('title') ? '#ffe6e6' : 'white',
                     borderRadius: 6,
                     fontSize: 14
                   }}
-                  required
                 />
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>
-                  Description *
-                </label>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Description *</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => updateField('description', e.target.value)}
                   rows={4}
                   style={{
                     width: '100%',
                     padding: 10,
-                    border: '1px solid #ddd',
+                    border: emptyFields.includes('course_description') || emptyFields.includes('description') ? '2px solid red' : '1px solid #ddd',
+                    background: emptyFields.includes('course_description') || emptyFields.includes('description') ? '#ffe6e6' : 'white',
                     borderRadius: 6,
                     fontSize: 14,
                     resize: 'vertical'
                   }}
-                  required
                 />
               </div>
 
               <div style={{ marginBottom: 16 }}>
-                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>
-                  Category *
-                </label>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Category *</label>
                 <select
                   value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  onChange={(e) => updateField('category_id', e.target.value)}
                   style={{
                     width: '100%',
                     padding: 10,
-                    border: '1px solid #ddd',
+                    border: emptyFields.includes('category_id') ? '2px solid red' : '1px solid #ddd',
+                    background: emptyFields.includes('category_id') ? '#ffe6e6' : 'white',
                     borderRadius: 6,
                     fontSize: 14
                   }}
-                  required
                 >
                   <option value="">Select a category</option>
-                  {categories.map(cat => (
+                  {categories.map((cat) => (
                     <option key={cat.category_id} value={cat.category_id}>
                       {cat.category_name}
                     </option>
@@ -313,7 +400,10 @@ export default function TeacherCourses() {
               <div style={{ display: 'flex', gap: 12 }}>
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    resetModalState();
+                  }}
                   style={{
                     flex: 1,
                     padding: '12px 24px',
@@ -343,6 +433,118 @@ export default function TeacherCourses() {
                   }}
                 >
                   {editingCourse ? 'Save Changes' : 'Create Course'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Category Creation Modal */}
+      {showCategoryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: 12,
+              padding: 32,
+              maxWidth: 500,
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}
+          >
+            <h2 style={{ marginTop: 0 }}>Create New Category</h2>
+
+            {categoryError && (
+              <div style={{ padding: 12, background: '#fee', color: '#c00', borderRadius: 6, marginBottom: 16 }}>
+                {categoryError}
+              </div>
+            )}
+
+            <form onSubmit={handleCategorySubmit}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Name *</label>
+                <input
+                  type="text"
+                  value={categoryFormData.name}
+                  onChange={(e) => setCategoryFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>Description *</label>
+                <textarea
+                  value={categoryFormData.description}
+                  onChange={(e) => setCategoryFormData((prev) => ({ ...prev, description: e.target.value }))}
+                  rows={4}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    fontSize: 14,
+                    resize: 'vertical'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCategoryModal(false);
+                    setCategoryError('');
+                  }}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#4a90e2',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Create Category
                 </button>
               </div>
             </form>

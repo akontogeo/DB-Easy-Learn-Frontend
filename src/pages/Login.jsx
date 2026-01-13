@@ -14,23 +14,31 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    if (!email) {
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    if (!normalizedEmail) {
       setError('Please enter your email');
       return;
     }
 
     try {
       setLoading(true);
-      const userData = await login(email);
-      
-      // Save user to context
-      setUser(userData);
-      
-      // Redirect based on role
-      if (userData.role === 'teacher') {
+
+      const data = await login(email);
+      const token = data?.token;
+      const user = data?.user;
+
+      if (!token || !user) {
+        setError('Login failed: missing token or user');
+        return;
+      }
+
+      localStorage.setItem('auth_token', token);
+      setUser(user);
+
+      if (user.role === 'teacher') {
         navigate('/teacher/courses');
       } else {
-        navigate(`/users/${userData.userId}`);
+        navigate(`/users/${user.userId}`);
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -65,9 +73,9 @@ export default function Login() {
           <img
             src="/Logo.png"
             alt="EasyLearn"
-            style={{ 
-              width: 100, 
-              height: 100, 
+            style={{
+              width: 100,
+              height: 100,
               objectFit: 'contain',
               border: '3px solid #2ea67a',
               borderRadius: '50%',
@@ -123,8 +131,8 @@ export default function Login() {
                 transition: 'border-color 0.2s',
                 boxSizing: 'border-box'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#2ea67a'}
-              onBlur={(e) => e.target.style.borderColor = '#e0e0e0'}
+              onFocus={(e) => (e.target.style.borderColor = '#2ea67a')}
+              onBlur={(e) => (e.target.style.borderColor = '#e0e0e0')}
             />
           </div>
 
@@ -159,7 +167,7 @@ export default function Login() {
               boxShadow: loading ? 'none' : '0 4px 12px rgba(46, 166, 122, 0.3)'
             }}
             onMouseOver={(e) => !loading && (e.target.style.transform = 'translateY(-2px)')}
-            onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+            onMouseOut={(e) => (e.target.style.transform = 'translateY(0)')}
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
