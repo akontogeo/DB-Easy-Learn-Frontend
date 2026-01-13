@@ -1,17 +1,16 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { getUserProfile } from '../api/users';
 
 // Global auth context for managing user authentication state
 const AuthContext = createContext();
 
-// Auth provider - wraps app and manages user state
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage on startup
+  // Load user from localStorage on startup (NO profile fetch)
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
+
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
@@ -20,6 +19,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('user');
       }
     }
+
     setLoading(false);
   }, []);
 
@@ -32,8 +32,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
-  const login = (token) => {
-    localStorage.setItem('auth_token', token);
+  // Login just stores token + user object (returned from /users/login)
+  const login = (token, userObj) => {
+    if (token) localStorage.setItem('auth_token', token);
+    if (userObj) setUser(userObj);
   };
 
   const logout = () => {

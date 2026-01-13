@@ -51,9 +51,17 @@ export default function CourseProgress(){
         const lessonsData = await getCourseLessons(courseId);
         setLessons(lessonsData || []);
         
-        // Load quizzes
-        const quizzesData = await getCourseQuizzes(courseId);
-        setQuizzes(quizzesData || []);
+            // Load quizzes
+            const quizzesRes = await getCourseQuizzes(courseId);
+            let quizzesArr = [];
+            if (quizzesRes && quizzesRes.ok) {
+              if (Array.isArray(quizzesRes.data)) {
+                quizzesArr = quizzesRes.data;
+              } else if (Array.isArray(quizzesRes.data?.quizzes)) {
+                quizzesArr = quizzesRes.data.quizzes;
+              }
+            }
+            setQuizzes(quizzesArr);
         
         // Load completed quizzes from localStorage
         const completedKey = `completed_quizzes_user_${userId}_course_${courseId}`;

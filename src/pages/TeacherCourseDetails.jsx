@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourse } from '../api/courses';
 import { getCourseLessons, createLesson, updateLesson, deleteLesson } from '../api/lessons';
-import { getCourseQuizzes } from '../api/quizzes';
+import { getCourseQuizzes, createQuiz, updateQuiz, deleteQuiz, getQuizForTeacher } from '../api/quizzes';
 import { getCourseReviews, getCourseAverageRating } from '../api/courses';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,7 +13,22 @@ export default function TeacherCourseDetails() {
   
   const [course, setCourse] = useState(null);
   const [lessons, setLessons] = useState([]);
+  // QUIZZES STATE
   const [quizzes, setQuizzes] = useState([]);
+  const [quizLoading, setQuizLoading] = useState(true);
+  const [showQuizModal, setShowQuizModal] = useState(false);
+  const [editingQuiz, setEditingQuiz] = useState(null);
+  const [quizError, setQuizError] = useState('');
+  const emptyQuizForm = {
+    quiz_title: '',
+    questions: [
+      { question_text: '', question_points: 1, answers: [
+        { answer_text: '', is_correct: true },
+        { answer_text: '', is_correct: false }
+      ]}
+    ]
+  };
+  const [quizForm, setQuizForm] = useState(emptyQuizForm);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +46,198 @@ export default function TeacherCourseDetails() {
 
   useEffect(() => {
     loadCourseData();
+    loadQuizzes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [courseId]);
+
+  const loadQuizzes = async () => {
+    setQuizLoading(true);
+    const res = await getCourseQuizzes(courseId);
+    if (res.ok) {
+      setQuizzes(Array.isArray(res.data) ? res.data : []);
+      setQuizError('');
+    } else {
+      setQuizzes([]);
+      setQuizError(res.error?.message || 'Failed to load quizzes');
+      console.error('Failed to load quizzes:', res.error);
+    }
+    setQuizLoading(false);
+  };
+
+  const openCreateQuiz = () => {
+    setEditingQuiz(null);
+    setQuizForm(emptyQuizForm);
+    setQuizError('');
+    setShowQuizModal(true);
+  };
+
+  const openEditQuiz = async (quiz) => {
+    // load full quiz WITH correct answers for editing
+    const res = await getQuizForTeacher(courseId, quiz.quiz_id);
+    if (!res.ok) {
+      alert(res.error?.message || 'Failed to load quiz for edit');
+      return;
+    }
+    setEditingQuiz(quiz);
+    setQuizForm({
+      quiz_title: res.data.quiz_title || '',
+      questions: (res.data.questions || []).map(q => ({
+        question_text: q.question_text || '',
+        question_points: typeof q.question_points === 'number' ? q.question_points : 1,
+        answers: (q.answers || []).map(a => ({
+          answer_text: a.answer_text || '',
+          is_correct: !!a.is_correct
+        }))
+      }))
+    });
+    setQuizError('');
+    setShowQuizModal(true);
+  };
+
+  const saveQuiz = async (e) => {
+    e.preventDefault();
+    setQuizError('');
+
+    // basic validation
+    if (!quizForm.quiz_title.trim()) {
+      setQuizError('Quiz title is required');
+      return;
+    }
+    if (!quizForm.questions?.length) {
+      setQuizError('At least 1 question is required');
+      return;
+    }
+    for (const q of quizForm.questions) {
+      if (!q.question_text?.trim()) return setQuizError('All questions must have text');
+      if (!q.answers?.length || q.answers.length < 2) return setQuizError('Each question needs at least 2 answers');
+      const hasCorrect = q.answers.some(a => a.is_correct);
+      if (!hasCorrect) return setQuizError('Each question must have 1 correct answer');
+      for (const a of q.answers) {
+        if (!a.answer_text?.trim()) return setQuizError('All answers must have text');
+      }
+    }
+
+    // Add question_number to each question
+    // Ensure question_number is always set for each question
+    const quizPayload = {
+      ...quizForm,
+      questions: (quizForm.questions || []).map((q, idx) => {
+        const { question_text, question_points, answers } = q;
+        return {
+          question_text,
+          question_points,
+          question_number: idx + 1,
+          answers: (answers || []).map((a, ai) => ({
+            ...a,
+            question_number: idx + 1,
+            answer_number: ai + 1
+          }))
+        };
+      })
+    };
+    console.log('Quiz payload being sent:', JSON.stringify(quizPayload, null, 2));
+    const res = editingQuiz
+      ? await updateQuiz(courseId, editingQuiz.quiz_id, quizPayload)
+      : await createQuiz(courseId, quizPayload);
+
+    if (!res.ok) {
+      setQuizError(res.error?.message || 'Failed to save quiz');
+      return;
+    }
+
+    setShowQuizModal(false);
+    await loadQuizzes();
+  };
+
+  const removeQuizUI = async (quizId) => {
+    if (!window.confirm('Delete this quiz?')) return;
+    const res = await deleteQuiz(courseId, quizId);
+    if (!res.ok) {
+      alert(res.error?.message || 'Failed to delete quiz');
+      return;
+    }
+    await loadQuizzes();
+  };
+
+  // helpers for form editing
+  const setQuestionText = (qi, value) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].question_text = value;
+      return next;
+    });
+  };
+
+  const setQuestionPoints = (qi, value) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].question_points = Number(value) || 1;
+      return next;
+    });
+  };
+
+  const setAnswerText = (qi, ai, value) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].answers[ai].answer_text = value;
+      return next;
+    });
+  };
+
+  const setCorrectAnswer = (qi, ai) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].answers = next.questions[qi].answers.map((a, idx) => ({
+        ...a,
+        is_correct: idx === ai
+      }));
+      return next;
+    });
+  };
+
+  const addQuestion = () => {
+    setQuizForm(prev => ({
+      ...prev,
+      questions: [
+        ...prev.questions,
+        {
+          question_text: '',
+          question_points: 1,
+          answers: [
+            { answer_text: '', is_correct: true },
+            { answer_text: '', is_correct: false }
+          ]
+        }
+      ]
+    }));
+  };
+
+  const removeQuestion = (qi) => {
+    setQuizForm(prev => ({
+      ...prev,
+      questions: prev.questions.filter((_, idx) => idx !== qi)
+    }));
+  };
+
+  const addAnswer = (qi) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].answers.push({ answer_text: '', is_correct: false });
+      return next;
+    });
+  };
+
+  const removeAnswer = (qi, ai) => {
+    setQuizForm(prev => {
+      const next = structuredClone(prev);
+      next.questions[qi].answers.splice(ai, 1);
+      // ensure at least one correct
+      if (!next.questions[qi].answers.some(a => a.is_correct) && next.questions[qi].answers[0]) {
+        next.questions[qi].answers[0].is_correct = true;
+      }
+      return next;
+    });
+  };
 
   const loadCourseData = async () => {
     setLoading(true);
@@ -252,30 +458,223 @@ export default function TeacherCourseDetails() {
 
       {/* Quizzes Section */}
       <div style={{ marginBottom: 40 }}>
-        <h2 style={{ marginBottom: 20 }}>Quizzes ({quizzes.length})</h2>
-        {quizzes.length === 0 ? (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+          <h2 style={{ margin: 0 }}>Quizzes ({quizzes.length})</h2>
+          <button
+            onClick={openCreateQuiz}
+            style={{
+              padding: '10px 20px',
+              background: '#2ea67a',
+              color: 'white',
+              border: 'none',
+              borderRadius: 6,
+              fontSize: 14,
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            + Add Quiz
+          </button>
+        </div>
+        {quizLoading ? (
           <div style={{ padding: 40, background: '#f9f9f9', borderRadius: 8, textAlign: 'center' }}>
-            <p style={{ color: '#666' }}>No quizzes yet.</p>
-            <p style={{ color: '#999', fontSize: 14 }}>Quiz management coming soon</p>
+            <p style={{ color: '#666' }}>Loading quizzes...</p>
+          </div>
+        ) : (Array.isArray(quizzes) ? quizzes : []).length === 0 ? (
+          <div style={{ padding: 40, background: '#f9f9f9', borderRadius: 8, textAlign: 'center' }}>
+            <p style={{ color: '#666' }}>No quizzes yet. Create your first quiz!</p>
           </div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {quizzes.map((quiz) => (
+            {(Array.isArray(quizzes) ? quizzes : []).map((quiz) => (
               <div key={quiz.quiz_id} style={{
                 background: 'white',
                 border: '1px solid #ddd',
                 borderRadius: 8,
-                padding: 16
+                padding: 16,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
               }}>
-                <h3 style={{ margin: 0, fontSize: 18 }}>{quiz.quiz_title}</h3>
-                <p style={{ margin: '8px 0 0 0', color: '#999', fontSize: 13 }}>
-                  Quiz management coming soon
-                </p>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ margin: '0 0 8px 0', fontSize: 18 }}>{quiz.quiz_title}</h3>
+                </div>
+                <div style={{ display: 'flex', gap: 8, marginLeft: 16 }}>
+                  <button
+                    onClick={() => openEditQuiz(quiz)}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'white',
+                      color: '#2ea67a',
+                      border: '2px solid #2ea67a',
+                      borderRadius: 6,
+                      fontSize: 13,
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => removeQuizUI(quiz.quiz_id)}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'white',
+                      color: '#dc3545',
+                      border: '2px solid #dc3545',
+                      borderRadius: 6,
+                      fontSize: 13,
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Quiz Modal */}
+      {showQuizModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 12,
+            padding: 32,
+            maxWidth: 700,
+            width: '90%',
+            maxHeight: '90vh',
+            overflow: 'auto'
+          }}>
+            <h2 style={{ marginTop: 0 }}>{editingQuiz ? 'Edit Quiz' : 'Create New Quiz'}</h2>
+            {quizError && (
+              <div style={{ padding: 12, background: '#fee', color: '#c00', borderRadius: 6, marginBottom: 16 }}>
+                {quizError}
+              </div>
+            )}
+            <form onSubmit={saveQuiz}>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', marginBottom: 6, fontWeight: 'bold' }}>
+                  Quiz Title *
+                </label>
+                <input
+                  type="text"
+                  value={quizForm.quiz_title}
+                  onChange={e => setQuizForm({ ...quizForm, quiz_title: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: 10,
+                    border: '1px solid #ddd',
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                />
+              </div>
+              {quizForm.questions.map((q, qi) => (
+                <div key={qi} style={{ marginBottom: 24, border: '1px solid #eee', borderRadius: 8, padding: 16 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <label style={{ fontWeight: 'bold' }}>Question {qi + 1}</label>
+                    {quizForm.questions.length > 1 && (
+                      <button type="button" onClick={() => removeQuestion(qi)} style={{ color: '#dc3545', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Remove</button>
+                    )}
+                  </div>
+                  <input
+                    type="text"
+                    value={q.question_text}
+                    onChange={e => setQuestionText(qi, e.target.value)}
+                    placeholder="Enter question text"
+                    style={{ width: '100%', padding: 8, border: '1px solid #ddd', borderRadius: 6, fontSize: 14, marginBottom: 8 }}
+                  />
+                  <div style={{ marginBottom: 8 }}>
+                    <label style={{ fontWeight: 'bold', marginRight: 8 }}>Points *</label>
+                    <input
+                      type="number"
+                      min={1}
+                      value={q.question_points || 1}
+                      onChange={e => setQuestionPoints(qi, e.target.value)}
+                      style={{ width: 80, padding: 6, border: '1px solid #ddd', borderRadius: 6, fontSize: 14 }}
+                    />
+                  </div>
+                  <div style={{ marginLeft: 12 }}>
+                    {q.answers.map((a, ai) => (
+                      <div key={ai} style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+                        <input
+                          type="text"
+                          value={a.answer_text}
+                          onChange={e => setAnswerText(qi, ai, e.target.value)}
+                          placeholder={`Answer ${ai + 1}`}
+                          style={{ flex: 1, padding: 6, border: '1px solid #ddd', borderRadius: 6, fontSize: 13, marginRight: 8 }}
+                        />
+                        <label style={{ marginRight: 8 }}>
+                          <input
+                            type="radio"
+                            checked={a.is_correct}
+                            onChange={() => setCorrectAnswer(qi, ai)}
+                          /> Correct
+                        </label>
+                        {q.answers.length > 2 && (
+                          <button type="button" onClick={() => removeAnswer(qi, ai)} style={{ color: '#dc3545', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>Remove</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => addAnswer(qi)} style={{ color: '#2ea67a', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', marginTop: 4 }}>+ Add Answer</button>
+                  </div>
+                </div>
+              ))}
+              <button type="button" onClick={addQuestion} style={{ color: '#2ea67a', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 'bold', marginBottom: 16 }}>+ Add Question</button>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <button
+                  type="button"
+                  onClick={() => setShowQuizModal(false)}
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#f0f0f0',
+                    color: '#333',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{
+                    flex: 1,
+                    padding: '12px 24px',
+                    background: '#2ea67a',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    fontWeight: 'bold',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {editingQuiz ? 'Save Changes' : 'Create Quiz'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Reviews Section */}
       <div>

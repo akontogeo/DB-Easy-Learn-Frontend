@@ -1,37 +1,77 @@
 import client from './client';
 
-// Extract data from API response wrapper
 const unwrap = (response) => response.data?.data || response.data;
 
-// GET /courses/:courseId/quizzes - List all quizzes for a course
-export const getCourseQuizzes = (courseId) => {
-  return client.get(`/courses/${courseId}/quizzes`)
-    .then(r => {
-      const data = unwrap(r);
-      return Array.isArray(data) ? data : [];
-    })
-    .catch(err => {
-      console.error('Get course quizzes error:', err);
-      return [];
-    });
+const wrapError = (err) => {
+  if (err?.response) return { ok: false, status: err.response.status, error: err.response.data };
+  return {
+    ok: false,
+    status: 0,
+    error: { success: false, error: 'Network Error', message: err?.message || 'Request failed' }
+  };
 };
 
-// GET /courses/:courseId/quizzes/:quizId - Get quiz with questions (correct answers hidden)
-export const getQuiz = (courseId, quizId) => {
-  return client.get(`/courses/${courseId}/quizzes/${quizId}`)
-    .then(r => unwrap(r))
-    .catch(err => {
-      console.error('Get quiz error:', err);
-      return null;
-    });
+export const getCourseQuizzes = async (courseId) => {
+  try {
+    const r = await client.get(`/courses/${courseId}/quizzes`);
+    const data = unwrap(r);
+    return { ok: true, data: Array.isArray(data) ? data : [] };
+  } catch (err) {
+    return wrapError(err);
+  }
 };
 
-// POST /courses/:courseId/quizzes/:quizId/submit - Submit quiz answers
-export const submitQuiz = (courseId, quizId, payload) => {
-  return client.post(`/courses/${courseId}/quizzes/${quizId}/submit`, payload)
-    .then(r => unwrap(r))
-    .catch(err => {
-      console.error('Submit quiz error:', err);
-      throw err;
-    });
+export const getQuiz = async (courseId, quizId) => {
+  try {
+    const r = await client.get(`/courses/${courseId}/quizzes/${quizId}`);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
+};
+
+// ✅ teacher endpoint (includes correct answers)
+export const getQuizForTeacher = async (courseId, quizId) => {
+  try {
+    const r = await client.get(`/courses/${courseId}/quizzes/${quizId}/teacher`);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
+};
+
+export const createQuiz = async (courseId, payload) => {
+  try {
+    const r = await client.post(`/courses/${courseId}/quizzes`, payload);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
+};
+
+export const updateQuiz = async (courseId, quizId, payload) => {
+  try {
+    const r = await client.put(`/courses/${courseId}/quizzes/${quizId}`, payload);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
+};
+
+export const deleteQuiz = async (courseId, quizId) => {
+  try {
+    const r = await client.delete(`/courses/${courseId}/quizzes/${quizId}`);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
+};
+
+export const submitQuiz = async (courseId, quizId, payload) => {
+  try {
+    const r = await client.post(`/courses/${courseId}/quizzes/${quizId}/submit`, payload);
+    return { ok: true, data: unwrap(r) };
+  } catch (err) {
+    return wrapError(err);
+  }
 };
