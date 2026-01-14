@@ -26,7 +26,7 @@ npm install
 npm start
 ```
 
-Η εφαρμογή θα ανοίξει αυτόματα στο `http://localhost:3000`
+Η εφαρμογή θα ανοίξει αυτόματα στο link `http://localhost:3000`
 
 ## ⚙️ Configuration
 
